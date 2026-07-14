@@ -1,0 +1,713 @@
+syntax = "proto3";
+
+package fertigai.healthcare.v1;
+
+message SocialSecurityNumber {
+  string id = 1;
+  string number = 2;
+  string health_insurance_provider = 3;
+  InsuranceType insurance_type = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+enum InsuranceType {
+  INSURANCE_TYPE_UNSPECIFIED = 0;
+  INSURANCE_TYPE_STATUTORY = 1;
+  INSURANCE_TYPE_PRIVATE = 2;
+}
+
+message Patient {
+  string id = 1;
+  Gender gender = 2;
+  string first_name = 3;
+  string last_name = 4;
+  string birth_date = 5;
+  string birthplace = 6;
+  SocialSecurityNumber social_security_number = 7;
+  string telephone_number = 8;
+  bool accepted_gdpr = 9;
+  string created_at = 10;
+  string updated_at = 11;
+}
+
+message Department {
+  string id = 1;
+  string name = 2;
+  int32 current_capacity = 3;
+  int32 max_capacity = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+enum StationType {
+  STATION_TYPE_UNSPECIFIED = 0;
+  STATION_TYPE_INTENSIVE = 1;
+  STATION_TYPE_NORMAL = 2;
+}
+
+message Station {
+  string id = 1;
+  string name = 2;
+  StationType station_type = 3;
+  string department = 4;
+  string created_at = 5;
+  string updated_at = 6;
+  string building = 7;
+  int32 floor = 8;
+}
+
+enum RoomType {
+  ROOM_TYPE_UNSPECIFIED = 0;
+  ROOM_TYPE_GROUP_ROOM = 1;
+  ROOM_TYPE_SINGLE_ROOM_STANDARD = 2;
+  ROOM_TYPE_SINGLE_ROOM_INFECTIOUS = 3;
+  ROOM_TYPE_SINGLE_ROOM_AIRLOCK = 4;
+  ROOM_TYPE_SECRETARIAT = 5;
+}
+
+message Room {
+  string id = 1;
+  string name = 2;
+  RoomType room_type = 3;
+  int32 bed_capacity = 4;
+  int32 current_capacity = 5;
+  string department = 6;
+  string station = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+enum BedType {
+  BED_TYPE_UNSPECIFIED = 0;
+  BED_TYPE_INTENSIVE_CARE = 1;
+  BED_TYPE_STANDARD = 2;
+}
+
+enum BedStatus {
+  BED_STATUS_UNSPECIFIED = 0;
+  BED_STATUS_FREE = 1;
+  BED_STATUS_RESERVED = 2;
+  BED_STATUS_OCCUPIED = 3;
+}
+
+enum BedMaterial {
+  BED_MATERIAL_UNSPECIFIED = 0;
+  BED_MATERIAL_BARIATRIC = 1;
+  BED_MATERIAL_ELEVATING_LEG_REST = 2;
+  BED_MATERIAL_PRESSURE_ULCER = 3;
+  BED_MATERIAL_STANDARD = 4;
+}
+
+message Bed {
+  string id = 1;
+  BedType bed_type = 2;
+  BedStatus status = 3;
+  BedMaterial material = 4;
+  string department = 5;
+  string station = 6;
+  optional string room = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+enum PatientVisitType {
+  PATIENT_VISIT_TYPE_UNSPECIFIED = 0;
+  PATIENT_VISIT_TYPE_INPATIENT = 1;
+  PATIENT_VISIT_TYPE_OUTPATIENT = 2;
+}
+
+enum PatientVisitStatus {
+  PATIENT_VISIT_STATUS_UNSPECIFIED = 0;
+  PATIENT_VISIT_STATUS_ACTIVE = 1;
+  PATIENT_VISIT_STATUS_DISCHARGED = 2;
+}
+
+message PatientVisitPatient {
+  string id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string birth_date = 4;
+}
+
+message PatientVisit {
+  string id = 1;
+  string patient_number = 2;
+  PatientVisitType visit_type = 3;
+  PatientVisitStatus status = 4;
+  PatientVisitPatient patient = 5;
+  string department = 6;
+  optional string station = 7;
+  optional string room = 8;
+  optional string bed = 9;
+  string started_date = 10;
+  string started_time = 11;
+  optional string ended_date = 12;
+  optional string ended_time = 13;
+  string created_at = 14;
+  string updated_at = 15;
+}
+
+message Employee {
+  string id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string position = 4;
+  string department = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message AppointmentType {
+  string id = 1;
+  string name = 2;
+  string department = 3;
+  int32 default_duration_minutes = 4;
+  string created_at = 5;
+  string updated_at = 6;
+}
+
+message AppointmentSlot {
+  string scheduled_date = 1;
+  string scheduled_time = 2;
+}
+
+message PatientReference {
+  string id = 1;
+}
+
+message Appointment {
+  string id = 1;
+  string scheduled_date = 2;
+  string scheduled_time = 3;
+  PatientReference patient = 4;
+  AppointmentType appointment_type = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+enum Gender {
+  GENDER_UNSPECIFIED = 0;
+  GENDER_FEMALE = 1;
+  GENDER_MALE = 2;
+  GENDER_NON_BINARY = 3;
+  GENDER_UNKNOWN = 4;
+}
+
+message CreateSocialSecurityNumberRequest {
+  string number = 1;
+  string health_insurance_provider = 2;
+  InsuranceType insurance_type = 3;
+}
+
+message SocialSecurityNumberResponse {
+  SocialSecurityNumber data = 1;
+}
+
+message SocialSecurityNumberListResponse {
+  repeated SocialSecurityNumber data = 1;
+  Pagination pagination = 2;
+}
+
+message DatabaseSeedSummary {
+  int32 social_security_numbers = 1;
+  int32 patients = 2;
+  int32 departments = 3;
+  int32 stations = 4;
+  int32 rooms = 5;
+  int32 beds = 6;
+  int32 employees = 7;
+  int32 appointment_types = 8;
+  int32 appointments = 9;
+  int32 patient_visits = 10;
+}
+
+message DatabaseSeed {
+  string hospital_name = 1;
+  bool reset = 2;
+  DatabaseSeedSummary summary = 3;
+}
+
+message DatabaseSeedResponse {
+  DatabaseSeed data = 1;
+}
+
+message FinancialSummary {
+  int32 revenue_today = 1;
+  int32 revenue_mtd = 2;
+  int32 outstanding = 3;
+  int32 cost_today = 4;
+  double margin_pct = 5;
+  PayerMix payer_mix = 6;
+}
+
+message PayerMix {
+  int32 statutory = 1;
+  int32 private = 2;
+}
+
+message FinancialSummaryResponse {
+  FinancialSummary data = 1;
+}
+
+message RevenuePoint {
+  string date = 1;
+  int32 revenue = 2;
+  int32 cost = 3;
+}
+
+message RevenueTrendResponse {
+  repeated RevenuePoint data = 1;
+}
+
+message DepartmentFinancial {
+  string department = 1;
+  int32 revenue = 2;
+  int32 cost = 3;
+}
+
+message DepartmentFinancialListResponse {
+  repeated DepartmentFinancial data = 1;
+}
+
+enum InvoiceStatus {
+  INVOICE_STATUS_UNSPECIFIED = 0;
+  INVOICE_STATUS_PAID = 1;
+  INVOICE_STATUS_OPEN = 2;
+  INVOICE_STATUS_OVERDUE = 3;
+}
+
+message Invoice {
+  string id = 1;
+  string department = 2;
+  string payer = 3;
+  InsuranceType insurance_type = 4;
+  int32 amount = 5;
+  InvoiceStatus status = 6;
+  string issued_date = 7;
+}
+
+message InvoiceListResponse {
+  repeated Invoice data = 1;
+  Pagination pagination = 2;
+}
+
+enum AlertSeverity {
+  ALERT_SEVERITY_UNSPECIFIED = 0;
+  ALERT_SEVERITY_INFO = 1;
+  ALERT_SEVERITY_WARNING = 2;
+  ALERT_SEVERITY_CRITICAL = 3;
+}
+
+message Alert {
+  string id = 1;
+  AlertSeverity severity = 2;
+  string category = 3;
+  string message = 4;
+  string department = 5;
+  string created_at = 6;
+}
+
+message AlertListResponse {
+  repeated Alert data = 1;
+}
+
+message StaffingEntry {
+  string department = 1;
+  int32 on_shift = 2;
+  int32 on_call = 3;
+  int32 total = 4;
+}
+
+message StaffingListResponse {
+  repeated StaffingEntry data = 1;
+}
+
+message OpsSummaryBeds {
+  int32 total = 1;
+  int32 free = 2;
+  int32 reserved = 3;
+  int32 occupied = 4;
+  double occupancy_pct = 5;
+}
+
+message OpsSummaryCapacity {
+  int32 current = 1;
+  int32 max = 2;
+  double pct = 3;
+}
+
+message OpsSummaryVisits {
+  int32 active = 1;
+  int32 active_inpatient = 2;
+  int32 active_outpatient = 3;
+  int32 discharged = 4;
+}
+
+message OpsSummaryPatients {
+  int32 total = 1;
+}
+
+message OpsSummaryEmployees {
+  int32 total = 1;
+}
+
+message OpsSummaryDepartments {
+  int32 total = 1;
+}
+
+message OpsSummaryWards {
+  int32 total = 1;
+}
+
+message OpsSummary {
+  OpsSummaryBeds beds = 1;
+  OpsSummaryCapacity capacity = 2;
+  OpsSummaryVisits visits = 3;
+  OpsSummaryPatients patients = 4;
+  OpsSummaryEmployees employees = 5;
+  OpsSummaryDepartments departments = 6;
+  OpsSummaryWards wards = 7;
+  int32 appointments_on_date = 8;
+}
+
+message OpsSummaryResponse {
+  OpsSummary data = 1;
+}
+
+message FloorSummary {
+  string building = 1;
+  int32 level = 2;
+  string label = 3;
+  int32 ward_count = 4;
+  int32 bed_total = 5;
+  int32 occupied = 6;
+  double occupancy_pct = 7;
+}
+
+message FloorSummaryListResponse {
+  repeated FloorSummary data = 1;
+}
+
+message FloorPatient {
+  string first_name = 1;
+  string last_name = 2;
+  string patient_number = 3;
+}
+
+message FloorBed {
+  string id = 1;
+  BedStatus status = 2;
+  string room = 3;
+  optional FloorPatient patient = 4;
+}
+
+message FloorRoom {
+  string id = 1;
+  string name = 2;
+  RoomType room_type = 3;
+  int32 bed_capacity = 4;
+  int32 current_capacity = 5;
+  repeated FloorBed beds = 6;
+}
+
+message FloorWard {
+  string id = 1;
+  string name = 2;
+  StationType station_type = 3;
+  string department = 4;
+  repeated FloorRoom rooms = 5;
+}
+
+message FloorDetail {
+  string building = 1;
+  int32 level = 2;
+  string label = 3;
+  repeated FloorWard wards = 4;
+}
+
+message FloorDetailResponse {
+  FloorDetail data = 1;
+}
+
+message CreateDepartmentRequest {
+  string name = 1;
+  int32 current_capacity = 2;
+  int32 max_capacity = 3;
+}
+
+message DepartmentResponse {
+  Department data = 1;
+}
+
+message DepartmentListResponse {
+  repeated Department data = 1;
+  Pagination pagination = 2;
+}
+
+message CreateStationRequest {
+  string name = 1;
+  StationType station_type = 2;
+  string department_id = 3;
+  optional string building = 4;
+  optional int32 floor = 5;
+}
+
+message StationResponse {
+  Station data = 1;
+}
+
+message StationListResponse {
+  repeated Station data = 1;
+  Pagination pagination = 2;
+}
+
+message CreateRoomRequest {
+  string name = 1;
+  RoomType room_type = 2;
+  string department_id = 3;
+  string station_id = 4;
+}
+
+message RoomResponse {
+  Room data = 1;
+}
+
+message RoomListResponse {
+  repeated Room data = 1;
+  Pagination pagination = 2;
+}
+
+message CreateBedRequest {
+  BedType bed_type = 1;
+  BedStatus status = 2;
+  BedMaterial material = 3;
+  string department_id = 4;
+  string station_id = 5;
+  optional string room_id = 6;
+}
+
+message BedResponse {
+  Bed data = 1;
+}
+
+message BedListResponse {
+  repeated Bed data = 1;
+  Pagination pagination = 2;
+}
+
+message CreatePatientVisitRequest {
+  string patient_number = 1;
+  PatientVisitType visit_type = 2;
+  PatientVisitStatus status = 3;
+  string patient_id = 4;
+  string department_id = 5;
+  optional string station_id = 6;
+  optional string room_id = 7;
+  optional string bed_id = 8;
+  string started_date = 9;
+  string started_time = 10;
+  optional string ended_date = 11;
+  optional string ended_time = 12;
+}
+
+message PatientVisitResponse {
+  PatientVisit data = 1;
+}
+
+message PatientVisitListResponse {
+  repeated PatientVisit data = 1;
+  Pagination pagination = 2;
+}
+
+message PatientMovementAvailableBedsRequest {
+  string patient_number = 1;
+  string target_department_id = 2;
+}
+
+message CreatePatientMovementRequest {
+  string patient_number = 1;
+  string target_bed_id = 2;
+}
+
+message CompletePatientMovementRequest {
+  string patient_number = 1;
+}
+
+message PatientMovementAvailableBed {
+  string id = 1;
+  BedType bed_type = 2;
+  BedMaterial material = 3;
+}
+
+message PatientMovementAvailableRoom {
+  string id = 1;
+  string name = 2;
+  string department = 3;
+  string station = 4;
+  RoomType room_type = 5;
+  int32 bed_capacity = 6;
+  int32 current_capacity = 7;
+  repeated PatientMovementAvailableBed available_beds = 8;
+}
+
+message PatientMovementAvailableBeds {
+  bool available_bed = 1;
+  repeated PatientMovementAvailableRoom available_rooms = 2;
+}
+
+message PatientMovementAvailableBedsResponse {
+  PatientMovementAvailableBeds data = 1;
+}
+
+message PatientMovement {
+  string patient_number = 1;
+  optional string from_bed_id = 2;
+  string target_bed_id = 3;
+  BedStatus target_bed_status = 4;
+  PatientVisit patient_visit = 5;
+}
+
+message PatientMovementResponse {
+  PatientMovement data = 1;
+}
+
+message PatientMovementCompletion {
+  string patient_number = 1;
+  string bed_id = 2;
+  BedStatus bed_status = 3;
+  PatientVisit patient_visit = 4;
+}
+
+message PatientMovementCompletionResponse {
+  PatientMovementCompletion data = 1;
+}
+
+message CreateEmployeeRequest {
+  string first_name = 1;
+  string last_name = 2;
+  string position = 3;
+  string department_id = 4;
+}
+
+message EmployeeResponse {
+  Employee data = 1;
+}
+
+message EmployeeListResponse {
+  repeated Employee data = 1;
+  Pagination pagination = 2;
+}
+
+message CreateAppointmentTypeRequest {
+  string name = 1;
+  string department_id = 2;
+  int32 default_duration_minutes = 3;
+}
+
+message AppointmentTypeResponse {
+  AppointmentType data = 1;
+}
+
+message AppointmentTypeListResponse {
+  repeated AppointmentType data = 1;
+  Pagination pagination = 2;
+}
+
+message AppointmentSlotListResponse {
+  repeated AppointmentSlot data = 1;
+}
+
+message CreateAppointmentBookingRequest {
+  string health_insurance_number = 1;
+  string birth_date = 2;
+  string appointment_type_id = 3;
+  string scheduled_date = 4;
+  string scheduled_time = 5;
+}
+
+message CreateAppointmentCancellationRequest {
+  string health_insurance_number = 1;
+  string birth_date = 2;
+  string appointment_type_id = 3;
+  string scheduled_date = 4;
+  string scheduled_time = 5;
+}
+
+message CreateAppointmentRescheduleRequest {
+  string health_insurance_number = 1;
+  string birth_date = 2;
+  string appointment_type_id = 3;
+  string from_scheduled_date = 4;
+  string from_scheduled_time = 5;
+  string to_scheduled_date = 6;
+  string to_scheduled_time = 7;
+}
+
+message PatientAppointmentSearchRequest {
+  string health_insurance_number = 1;
+  string birth_date = 2;
+}
+
+message PatientAppointmentSummary {
+  optional string employee = 1;
+  string department = 2;
+  string appointment_type = 3;
+  string scheduled_date = 4;
+  string scheduled_time = 5;
+}
+
+message PatientAppointmentSearchResponse {
+  repeated PatientAppointmentSummary data = 1;
+}
+
+message CreateAppointmentRequest {
+  string scheduled_date = 1;
+  string scheduled_time = 2;
+  string linked_patient_id = 3;
+  string appointment_type_id = 4;
+}
+
+message AppointmentResponse {
+  Appointment data = 1;
+}
+
+message AppointmentListResponse {
+  repeated Appointment data = 1;
+  Pagination pagination = 2;
+}
+
+message CreatePatientRequest {
+  Gender gender = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string birth_date = 4;
+  string birthplace = 5;
+  string social_security_number_id = 6;
+  string telephone_number = 7;
+  bool accepted_gdpr = 8;
+}
+
+message PatientResponse {
+  Patient data = 1;
+}
+
+message PatientListResponse {
+  repeated Patient data = 1;
+  Pagination pagination = 2;
+}
+
+message Pagination {
+  string self = 1;
+  optional string next = 2;
+  optional string prev = 3;
+  bool has_more = 4;
+}
+
+message Problem {
+  string type = 1;
+  string title = 2;
+  int32 status = 3;
+  string detail = 4;
+  string instance = 5;
+}
