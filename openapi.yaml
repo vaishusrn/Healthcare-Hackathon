@@ -1,0 +1,2525 @@
+openapi: 3.1.0
+info:
+  title: Healthcare API
+  version: 1.0.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+servers:
+  - url: http://localhost:3000
+paths:
+  /v1/health:
+    get:
+      operationId: getHealth
+      summary: Check API health
+      responses:
+        "200":
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /v1/database-seeds:
+    post:
+      operationId: createDatabaseSeed
+      summary: Reset and seed German mock hospital data
+      responses:
+        "201":
+          description: Database reset and seeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DatabaseSeedResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/financial/summary:
+    get:
+      operationId: getFinancialSummary
+      summary: Get financial dashboard summary
+      responses:
+        "200":
+          description: Financial summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialSummaryResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/financial/revenue-trend:
+    get:
+      operationId: getRevenueTrend
+      summary: Get revenue and cost trend
+      parameters:
+        - name: days
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+            default: 30
+      responses:
+        "200":
+          description: Revenue trend
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueTrendResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/financial/by-department:
+    get:
+      operationId: listDepartmentFinancials
+      summary: List financials by department
+      responses:
+        "200":
+          description: Department financials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepartmentFinancialListResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/financial/invoices:
+    get:
+      operationId: listInvoices
+      summary: List invoices
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Invoices page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceListResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/ops/alerts:
+    get:
+      operationId: listOperationalAlerts
+      summary: List operational alerts
+      responses:
+        "200":
+          description: Operational alerts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertListResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/ops/staffing:
+    get:
+      operationId: listStaffing
+      summary: List staffing by department
+      responses:
+        "200":
+          description: Staffing by department
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffingListResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/ops/summary:
+    get:
+      operationId: getOpsSummary
+      summary: Get aggregate hospital operations KPIs
+      description: >-
+        Aggregate hospital KPIs (bed occupancy, capacity, visits, patients,
+        employees, departments, wards, appointments on a given date) computed
+        entirely via SQL count/sum/GROUP BY aggregates.
+      parameters:
+        - name: date
+          in: query
+          required: false
+          description: >-
+            Europe/Berlin local calendar date to count appointments for. When
+            omitted, appointments across all dates are counted.
+          schema:
+            $ref: "#/components/schemas/BerlinLocalDate"
+      responses:
+        "200":
+          description: Ops summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpsSummaryResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/ops/floors:
+    get:
+      operationId: listFloors
+      summary: List the building/floor navigation tree
+      description: >-
+        One entry per (building, floor) computed via SQL GROUP BY over
+        stations plus bed rollups, ordered by building then level. Powers
+        the frontend floor-plan navigation tree.
+      responses:
+        "200":
+          description: Floor navigation tree
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FloorSummaryListResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/ops/floors/detail:
+    get:
+      operationId: getFloorDetail
+      summary: Get a single floor's wards, rooms, and beds
+      description: >-
+        Wards -> rooms -> beds for one (building, level) pair, bounded to a
+        single floor (~5-6 wards / ~150 beds), with the active inpatient
+        occupant of each OCCUPIED bed included.
+      parameters:
+        - name: building
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: level
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: Floor detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FloorDetailResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/social-security-numbers:
+    post:
+      operationId: createSocialSecurityNumber
+      summary: Create a social security number record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSocialSecurityNumberRequest"
+      responses:
+        "201":
+          description: Social security number created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialSecurityNumberResponse"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+    get:
+      operationId: listSocialSecurityNumbers
+      summary: List social security number records
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Social security numbers page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialSecurityNumberListResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/social-security-numbers/{social_security_number_id}:
+    get:
+      operationId: getSocialSecurityNumber
+      summary: Get a social security number record
+      parameters:
+        - name: social_security_number_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^ssn_[A-Za-z0-9]{12}$"
+      responses:
+        "200":
+          description: Social security number found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialSecurityNumberResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/departments:
+    post:
+      operationId: createDepartment
+      summary: Create a department
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDepartmentRequest"
+      responses:
+        "201":
+          description: Department created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepartmentResponse"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+    get:
+      operationId: listDepartments
+      summary: List departments
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Departments page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepartmentListResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/departments/{department_id}:
+    get:
+      operationId: getDepartment
+      summary: Get a department
+      parameters:
+        - name: department_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^dep_[A-Za-z0-9]{12}$"
+      responses:
+        "200":
+          description: Department found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepartmentResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/stations:
+    post:
+      operationId: createStation
+      summary: Create a station
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStationRequest"
+      responses:
+        "201":
+          description: Station created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StationResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+    get:
+      operationId: listStations
+      summary: List stations
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Stations page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StationListResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/stations/{station_id}:
+    get:
+      operationId: getStation
+      summary: Get a station
+      parameters:
+        - name: station_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^sta_[A-Za-z0-9]{12}$"
+      responses:
+        "200":
+          description: Station found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StationResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/rooms:
+    post:
+      operationId: createRoom
+      summary: Create a room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoomRequest"
+      responses:
+        "201":
+          description: Room created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+    get:
+      operationId: listRooms
+      summary: List rooms
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Rooms page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomListResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/rooms/{room_id}:
+    get:
+      operationId: getRoom
+      summary: Get a room
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^roo_[A-Za-z0-9]{12}$"
+      responses:
+        "200":
+          description: Room found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoomResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/beds:
+    post:
+      operationId: createBed
+      summary: Create a bed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBedRequest"
+      responses:
+        "201":
+          description: Bed created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BedResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+    get:
+      operationId: listBeds
+      summary: List beds
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Beds page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BedListResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/beds/{bed_id}:
+    get:
+      operationId: getBed
+      summary: Get a bed
+      parameters:
+        - name: bed_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^bed_[A-Za-z0-9]{12}$"
+      responses:
+        "200":
+          description: Bed found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BedResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/patient-visits:
+    post:
+      operationId: createPatientVisit
+      summary: Create a patient visit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePatientVisitRequest"
+      responses:
+        "201":
+          description: Patient visit created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientVisitResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+    get:
+      operationId: listPatientVisits
+      summary: List patient visits
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Patient visits page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientVisitListResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/patient-visits/{patient_visit_id}:
+    get:
+      operationId: getPatientVisit
+      summary: Get a patient visit
+      parameters:
+        - name: patient_visit_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^pvi_[A-Za-z0-9]{12}$"
+      responses:
+        "200":
+          description: Patient visit found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientVisitResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/patient-movements/available-beds:
+    post:
+      operationId: listPatientMovementAvailableBeds
+      summary: List available beds for moving an active patient visit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientMovementAvailableBedsRequest"
+      responses:
+        "200":
+          description: Available movement rooms
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientMovementAvailableBedsResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/patient-movements:
+    post:
+      operationId: createPatientMovement
+      summary: Reserve a target bed and move an active patient visit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePatientMovementRequest"
+      responses:
+        "200":
+          description: Patient movement reserved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientMovementResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/patient-movements/completions:
+    post:
+      operationId: completePatientMovement
+      summary: Mark a reserved patient movement bed occupied
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompletePatientMovementRequest"
+      responses:
+        "200":
+          description: Patient movement completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientMovementCompletionResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/employees:
+    post:
+      operationId: createEmployee
+      summary: Create an employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEmployeeRequest"
+      responses:
+        "201":
+          description: Employee created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployeeResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+    get:
+      operationId: listEmployees
+      summary: List employees
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Employees page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployeeListResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/employees/{employee_id}:
+    get:
+      operationId: getEmployee
+      summary: Get an employee
+      parameters:
+        - name: employee_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^emp_[A-Za-z0-9]{12}$"
+      responses:
+        "200":
+          description: Employee found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployeeResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/appointment-types:
+    post:
+      operationId: createAppointmentType
+      summary: Create an appointment type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppointmentTypeRequest"
+      responses:
+        "201":
+          description: Appointment type created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentTypeResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+    get:
+      operationId: listAppointmentTypes
+      summary: List appointment types
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/PageSize"
+        - name: department_id
+          in: query
+          required: false
+          description: Filter appointment types to a single department.
+          schema:
+            type: string
+            pattern: "^dep_[A-Za-z0-9]{12}$"
+      responses:
+        "200":
+          description: Appointment types page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentTypeListResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/appointment-types/{appointment_type_id}:
+    get:
+      operationId: getAppointmentType
+      summary: Get an appointment type
+      parameters:
+        - name: appointment_type_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^aty_[A-Za-z0-9]{12}$"
+      responses:
+        "200":
+          description: Appointment type found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentTypeResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/appointment-types/{appointment_type_id}/slots:
+    get:
+      operationId: listAppointmentTypeSlots
+      summary: List available slots for an appointment type
+      parameters:
+        - name: appointment_type_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^aty_[A-Za-z0-9]{12}$"
+        - name: start
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/BerlinLocalDateTimeMinute"
+        - name: end
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/BerlinLocalDateTimeMinute"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 100
+      responses:
+        "200":
+          description: Available appointment slots
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentSlotListResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/appointments/bookings:
+    post:
+      operationId: createAppointmentBooking
+      summary: Book an appointment after patient validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppointmentBookingRequest"
+      responses:
+        "201":
+          description: Appointment booked
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/appointments/cancellations:
+    post:
+      operationId: createAppointmentCancellation
+      summary: Cancel an appointment after patient validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppointmentCancellationRequest"
+      responses:
+        "201":
+          description: Appointment canceled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/appointments/reschedules:
+    post:
+      operationId: createAppointmentReschedule
+      summary: Reschedule an appointment after patient validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppointmentRescheduleRequest"
+      responses:
+        "201":
+          description: Appointment rescheduled
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/appointments/searches:
+    post:
+      operationId: searchPatientAppointments
+      summary: List appointments for a validated patient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientAppointmentSearchRequest"
+      responses:
+        "200":
+          description: Patient appointments found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientAppointmentSearchResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/appointments:
+    post:
+      operationId: createAppointment
+      summary: Create an appointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppointmentRequest"
+      responses:
+        "201":
+          description: Appointment created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+    get:
+      operationId: listAppointments
+      summary: List appointments
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/PageSize"
+        - name: date
+          in: query
+          required: false
+          description: >-
+            Filter appointments to a single Europe/Berlin local calendar
+            date. When omitted, appointments across all dates are returned.
+          schema:
+            $ref: "#/components/schemas/BerlinLocalDate"
+      responses:
+        "200":
+          description: Appointments page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentListResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/appointments/{appointment_id}:
+    get:
+      operationId: getAppointment
+      summary: Get an appointment
+      parameters:
+        - name: appointment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^app_[A-Za-z0-9]{12}$"
+      responses:
+        "200":
+          description: Appointment found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /v1/patients:
+    post:
+      operationId: createPatient
+      summary: Create a patient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePatientRequest"
+      responses:
+        "201":
+          description: Patient created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+    get:
+      operationId: listPatients
+      summary: List patients
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Patients page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientListResponse"
+        "422":
+          $ref: "#/components/responses/Problem"
+  /v1/patients/{patient_id}:
+    get:
+      operationId: getPatient
+      summary: Get a patient
+      parameters:
+        - name: patient_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^pat_[A-Za-z0-9]{12}$"
+      responses:
+        "200":
+          description: Patient found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientResponse"
+        "404":
+          $ref: "#/components/responses/Problem"
+components:
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Opaque cursor token derived from public resource IDs, never internal integer IDs.
+      schema:
+        type: string
+    PageSize:
+      name: page_size
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+  responses:
+    Problem:
+      description: Problem Details error
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    HealthResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [status]
+          properties:
+            status:
+              type: string
+              enum: [OK]
+    DatabaseSeedSummary:
+      type: object
+      required:
+        - social_security_numbers
+        - patients
+        - departments
+        - stations
+        - rooms
+        - beds
+        - patient_visits
+        - employees
+        - appointment_types
+        - appointments
+      properties:
+        social_security_numbers:
+          type: integer
+        patients:
+          type: integer
+        departments:
+          type: integer
+        stations:
+          type: integer
+        rooms:
+          type: integer
+        beds:
+          type: integer
+        patient_visits:
+          type: integer
+        employees:
+          type: integer
+        appointment_types:
+          type: integer
+        appointments:
+          type: integer
+    DatabaseSeed:
+      type: object
+      required: [hospital_name, reset, summary]
+      properties:
+        hospital_name:
+          type: string
+          enum: [Uniklikum X]
+        reset:
+          type: boolean
+          enum: [true]
+          description: Indicates that existing app data was cleared before seeding.
+        summary:
+          $ref: "#/components/schemas/DatabaseSeedSummary"
+    DatabaseSeedResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/DatabaseSeed"
+    FinancialSummary:
+      type: object
+      required:
+        - revenue_today
+        - revenue_mtd
+        - outstanding
+        - cost_today
+        - margin_pct
+        - payer_mix
+      properties:
+        revenue_today:
+          type: integer
+        revenue_mtd:
+          type: integer
+        outstanding:
+          type: integer
+        cost_today:
+          type: integer
+        margin_pct:
+          type: number
+        payer_mix:
+          type: object
+          required: [statutory, private]
+          properties:
+            statutory:
+              type: integer
+            private:
+              type: integer
+    FinancialSummaryResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/FinancialSummary"
+    RevenuePoint:
+      type: object
+      required: [date, revenue, cost]
+      properties:
+        date:
+          $ref: "#/components/schemas/BerlinLocalDate"
+        revenue:
+          type: integer
+        cost:
+          type: integer
+    RevenueTrendResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RevenuePoint"
+    DepartmentFinancial:
+      type: object
+      required: [department, revenue, cost]
+      properties:
+        department:
+          type: string
+        revenue:
+          type: integer
+        cost:
+          type: integer
+    DepartmentFinancialListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DepartmentFinancial"
+    InvoiceStatus:
+      type: string
+      enum: [PAID, OPEN, OVERDUE]
+    Invoice:
+      type: object
+      required:
+        - id
+        - department
+        - payer
+        - insurance_type
+        - amount
+        - status
+        - issued_date
+      properties:
+        id:
+          type: string
+          pattern: "^inv_[0-9]{5}$"
+        department:
+          type: string
+        payer:
+          type: string
+        insurance_type:
+          $ref: "#/components/schemas/InsuranceType"
+        amount:
+          type: integer
+        status:
+          $ref: "#/components/schemas/InvoiceStatus"
+        issued_date:
+          $ref: "#/components/schemas/BerlinLocalDate"
+    InvoiceListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Invoice"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    AlertSeverity:
+      type: string
+      enum: [INFO, WARNING, CRITICAL]
+    Alert:
+      type: object
+      required: [id, severity, category, message, department, created_at]
+      properties:
+        id:
+          type: string
+        severity:
+          $ref: "#/components/schemas/AlertSeverity"
+        category:
+          type: string
+        message:
+          type: string
+        department:
+          type: string
+        created_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+    AlertListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Alert"
+    StaffingEntry:
+      type: object
+      required: [department, on_shift, on_call, total]
+      properties:
+        department:
+          type: string
+        on_shift:
+          type: integer
+        on_call:
+          type: integer
+        total:
+          type: integer
+    StaffingListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StaffingEntry"
+    OpsSummary:
+      type: object
+      required:
+        - beds
+        - capacity
+        - visits
+        - patients
+        - employees
+        - departments
+        - wards
+        - appointments_on_date
+      properties:
+        beds:
+          type: object
+          required: [total, free, reserved, occupied, occupancy_pct]
+          properties:
+            total:
+              type: integer
+            free:
+              type: integer
+            reserved:
+              type: integer
+            occupied:
+              type: integer
+            occupancy_pct:
+              type: number
+        capacity:
+          type: object
+          required: [current, max, pct]
+          properties:
+            current:
+              type: integer
+            max:
+              type: integer
+            pct:
+              type: number
+        visits:
+          type: object
+          required: [active, active_inpatient, active_outpatient, discharged]
+          properties:
+            active:
+              type: integer
+            active_inpatient:
+              type: integer
+            active_outpatient:
+              type: integer
+            discharged:
+              type: integer
+        patients:
+          type: object
+          required: [total]
+          properties:
+            total:
+              type: integer
+        employees:
+          type: object
+          required: [total]
+          properties:
+            total:
+              type: integer
+        departments:
+          type: object
+          required: [total]
+          properties:
+            total:
+              type: integer
+        wards:
+          type: object
+          required: [total]
+          properties:
+            total:
+              type: integer
+        appointments_on_date:
+          type: integer
+    OpsSummaryResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/OpsSummary"
+    FloorSummary:
+      type: object
+      required:
+        - building
+        - level
+        - label
+        - ward_count
+        - bed_total
+        - occupied
+        - occupancy_pct
+      properties:
+        building:
+          type: string
+        level:
+          type: integer
+          description: 0-indexed floor level (0 = EG).
+        label:
+          type: string
+          description: Human-readable floor label, e.g. "EG" or "3. OG".
+        ward_count:
+          type: integer
+        bed_total:
+          type: integer
+        occupied:
+          type: integer
+        occupancy_pct:
+          type: number
+    FloorSummaryListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/FloorSummary"
+    FloorPatient:
+      type: object
+      required: [first_name, last_name, patient_number]
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        patient_number:
+          type: string
+    FloorBed:
+      type: object
+      required: [id, status, room]
+      properties:
+        id:
+          type: string
+          pattern: "^bed_[A-Za-z0-9]{12}$"
+        status:
+          $ref: "#/components/schemas/BedStatus"
+        room:
+          type: string
+        patient:
+          $ref: "#/components/schemas/FloorPatient"
+    FloorRoom:
+      type: object
+      required: [id, name, room_type, bed_capacity, current_capacity, beds]
+      properties:
+        id:
+          type: string
+          pattern: "^roo_[A-Za-z0-9]{12}$"
+        name:
+          type: string
+        room_type:
+          $ref: "#/components/schemas/RoomType"
+        bed_capacity:
+          type: integer
+        current_capacity:
+          type: integer
+        beds:
+          type: array
+          items:
+            $ref: "#/components/schemas/FloorBed"
+    FloorWard:
+      type: object
+      required: [id, name, station_type, department, rooms]
+      properties:
+        id:
+          type: string
+          pattern: "^sta_[A-Za-z0-9]{12}$"
+        name:
+          type: string
+        station_type:
+          $ref: "#/components/schemas/StationType"
+        department:
+          type: string
+        rooms:
+          type: array
+          items:
+            $ref: "#/components/schemas/FloorRoom"
+    FloorDetail:
+      type: object
+      required: [building, level, label, wards]
+      properties:
+        building:
+          type: string
+        level:
+          type: integer
+        label:
+          type: string
+        wards:
+          type: array
+          items:
+            $ref: "#/components/schemas/FloorWard"
+    FloorDetailResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/FloorDetail"
+    InsuranceType:
+      type: string
+      enum: [STATUTORY, PRIVATE]
+    Gender:
+      type: string
+      enum: [FEMALE, MALE, NON_BINARY, UNKNOWN]
+    StationType:
+      type: string
+      enum: [INTENSIVE, NORMAL]
+    RoomType:
+      type: string
+      enum:
+        - GROUP_ROOM
+        - SINGLE_ROOM_STANDARD
+        - SINGLE_ROOM_INFECTIOUS
+        - SINGLE_ROOM_AIRLOCK
+        - SECRETARIAT
+    BedType:
+      type: string
+      enum: [INTENSIVE_CARE, STANDARD]
+    BedStatus:
+      type: string
+      enum: [FREE, RESERVED, OCCUPIED]
+    BedMaterial:
+      type: string
+      enum: [BARIATRIC, ELEVATING_LEG_REST, PRESSURE_ULCER, STANDARD]
+    PatientVisitType:
+      type: string
+      enum: [INPATIENT, OUTPATIENT]
+    PatientVisitStatus:
+      type: string
+      enum: [ACTIVE, DISCHARGED]
+    BerlinDateTime:
+      type: string
+      format: date-time
+      description: Europe/Berlin local date-time with offset for generated API timestamps. The API does not emit UTC Z timestamps for these fields.
+      examples:
+        - "2026-07-09T14:00:00.000+02:00"
+        - "2026-01-15T13:00:00.000+01:00"
+    BerlinLocalDate:
+      type: string
+      format: date
+      description: Europe/Berlin local calendar date. No timezone field, query parameter, or offset is accepted.
+    BerlinLocalTime:
+      type: string
+      pattern: '^([01]\d|2[0-3]):[0-5]\d$'
+      description: Europe/Berlin local wall-clock time in HH:mm. No timezone field, query parameter, or offset is accepted.
+    BerlinLocalDateTimeMinute:
+      type: string
+      pattern: '^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d$'
+      description: Europe/Berlin local date-time in YYYY-MM-DDTHH:mm. No timezone field, query parameter, or offset is accepted.
+    CreateSocialSecurityNumberRequest:
+      type: object
+      required: [number, health_insurance_provider, insurance_type]
+      properties:
+        number:
+          type: string
+          minLength: 1
+        health_insurance_provider:
+          type: string
+          minLength: 1
+        insurance_type:
+          $ref: "#/components/schemas/InsuranceType"
+      additionalProperties: false
+    SocialSecurityNumber:
+      type: object
+      required: [id, number, health_insurance_provider, insurance_type, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          pattern: "^ssn_[A-Za-z0-9]{12}$"
+        number:
+          type: string
+        health_insurance_provider:
+          type: string
+        insurance_type:
+          $ref: "#/components/schemas/InsuranceType"
+        created_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+        updated_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+    SocialSecurityNumberResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/SocialSecurityNumber"
+    SocialSecurityNumberListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/SocialSecurityNumber"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    CreateDepartmentRequest:
+      type: object
+      required: [name, current_capacity, max_capacity]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        current_capacity:
+          type: integer
+        max_capacity:
+          type: integer
+      additionalProperties: false
+    Department:
+      type: object
+      required:
+        - id
+        - name
+        - current_capacity
+        - max_capacity
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          pattern: "^dep_[A-Za-z0-9]{12}$"
+        name:
+          type: string
+        current_capacity:
+          type: integer
+        max_capacity:
+          type: integer
+        created_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+        updated_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+    DepartmentResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Department"
+    DepartmentListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Department"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    CreateStationRequest:
+      type: object
+      required: [name, station_type, department_id]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        station_type:
+          $ref: "#/components/schemas/StationType"
+        department_id:
+          type: string
+          pattern: "^dep_[A-Za-z0-9]{12}$"
+        building:
+          type: string
+          minLength: 1
+        floor:
+          type: integer
+      additionalProperties: false
+    Station:
+      type: object
+      required: [id, name, station_type, department, building, floor, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          pattern: "^sta_[A-Za-z0-9]{12}$"
+        name:
+          type: string
+        station_type:
+          $ref: "#/components/schemas/StationType"
+        department:
+          type: string
+        building:
+          type: string
+        floor:
+          type: integer
+        created_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+        updated_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+    StationResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Station"
+    StationListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Station"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    CreateRoomRequest:
+      type: object
+      required: [name, room_type, department_id, station_id]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        room_type:
+          $ref: "#/components/schemas/RoomType"
+        department_id:
+          type: string
+          pattern: "^dep_[A-Za-z0-9]{12}$"
+        station_id:
+          type: string
+          pattern: "^sta_[A-Za-z0-9]{12}$"
+      additionalProperties: false
+    Room:
+      type: object
+      required:
+        - id
+        - name
+        - room_type
+        - bed_capacity
+        - current_capacity
+        - department
+        - station
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          pattern: "^roo_[A-Za-z0-9]{12}$"
+        name:
+          type: string
+        room_type:
+          $ref: "#/components/schemas/RoomType"
+        bed_capacity:
+          type: integer
+          description: Count of all beds assigned to this room.
+        current_capacity:
+          type: integer
+          description: Count of occupied beds assigned to this room.
+        department:
+          type: string
+        station:
+          type: string
+        created_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+        updated_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+    RoomResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Room"
+    RoomListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Room"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    CreateBedRequest:
+      type: object
+      required: [bed_type, status, material, department_id, station_id]
+      properties:
+        bed_type:
+          $ref: "#/components/schemas/BedType"
+        status:
+          $ref: "#/components/schemas/BedStatus"
+        material:
+          $ref: "#/components/schemas/BedMaterial"
+        department_id:
+          type: string
+          pattern: "^dep_[A-Za-z0-9]{12}$"
+        station_id:
+          type: string
+          pattern: "^sta_[A-Za-z0-9]{12}$"
+        room_id:
+          type:
+            - string
+            - "null"
+          pattern: "^roo_[A-Za-z0-9]{12}$"
+      additionalProperties: false
+    Bed:
+      type: object
+      required:
+        - id
+        - bed_type
+        - status
+        - material
+        - department
+        - station
+        - room
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          pattern: "^bed_[A-Za-z0-9]{12}$"
+        bed_type:
+          $ref: "#/components/schemas/BedType"
+        status:
+          $ref: "#/components/schemas/BedStatus"
+        material:
+          $ref: "#/components/schemas/BedMaterial"
+        department:
+          type: string
+        station:
+          type: string
+        room:
+          type:
+            - string
+            - "null"
+        created_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+        updated_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+    BedResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Bed"
+    BedListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bed"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    CreatePatientVisitRequest:
+      type: object
+      required:
+        - patient_number
+        - visit_type
+        - status
+        - patient_id
+        - department_id
+        - started_date
+        - started_time
+      properties:
+        patient_number:
+          type: string
+          pattern: "^[0-9]{5}$"
+          description: Five digit visit patient number. It is unique only among active visits.
+        visit_type:
+          $ref: "#/components/schemas/PatientVisitType"
+        status:
+          $ref: "#/components/schemas/PatientVisitStatus"
+        patient_id:
+          type: string
+          pattern: "^pat_[A-Za-z0-9]{12}$"
+        department_id:
+          type: string
+          pattern: "^dep_[A-Za-z0-9]{12}$"
+        station_id:
+          type:
+            - string
+            - "null"
+          pattern: "^sta_[A-Za-z0-9]{12}$"
+          description: Required for INPATIENT visits; must be omitted or null for OUTPATIENT visits.
+        room_id:
+          type:
+            - string
+            - "null"
+          pattern: "^roo_[A-Za-z0-9]{12}$"
+          description: Required for INPATIENT visits; must be omitted or null for OUTPATIENT visits. Requires station_id when provided.
+        bed_id:
+          type:
+            - string
+            - "null"
+          pattern: "^bed_[A-Za-z0-9]{12}$"
+          description: Required for INPATIENT visits; must be omitted or null for OUTPATIENT visits. Requires station_id and room_id when provided.
+        started_date:
+          $ref: "#/components/schemas/BerlinLocalDate"
+        started_time:
+          $ref: "#/components/schemas/BerlinLocalTime"
+        ended_date:
+          anyOf:
+            - $ref: "#/components/schemas/BerlinLocalDate"
+            - type: "null"
+        ended_time:
+          anyOf:
+            - $ref: "#/components/schemas/BerlinLocalTime"
+            - type: "null"
+      additionalProperties: false
+    PatientVisitPatient:
+      type: object
+      required: [id, first_name, last_name, birth_date]
+      properties:
+        id:
+          type: string
+          pattern: "^pat_[A-Za-z0-9]{12}$"
+        first_name:
+          type: string
+        last_name:
+          type: string
+        birth_date:
+          $ref: "#/components/schemas/BerlinLocalDate"
+    PatientVisit:
+      type: object
+      required:
+        - id
+        - patient_number
+        - visit_type
+        - status
+        - patient
+        - department
+        - station
+        - room
+        - bed
+        - started_date
+        - started_time
+        - ended_date
+        - ended_time
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          pattern: "^pvi_[A-Za-z0-9]{12}$"
+        patient_number:
+          type: string
+          pattern: "^[0-9]{5}$"
+        visit_type:
+          $ref: "#/components/schemas/PatientVisitType"
+        status:
+          $ref: "#/components/schemas/PatientVisitStatus"
+        patient:
+          $ref: "#/components/schemas/PatientVisitPatient"
+        department:
+          type: string
+        station:
+          type:
+            - string
+            - "null"
+        room:
+          type:
+            - string
+            - "null"
+        bed:
+          type:
+            - string
+            - "null"
+          pattern: "^bed_[A-Za-z0-9]{12}$"
+        started_date:
+          $ref: "#/components/schemas/BerlinLocalDate"
+        started_time:
+          $ref: "#/components/schemas/BerlinLocalTime"
+        ended_date:
+          anyOf:
+            - $ref: "#/components/schemas/BerlinLocalDate"
+            - type: "null"
+        ended_time:
+          anyOf:
+            - $ref: "#/components/schemas/BerlinLocalTime"
+            - type: "null"
+        created_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+        updated_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+    PatientVisitResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/PatientVisit"
+    PatientVisitListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PatientVisit"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    PatientMovementAvailableBedsRequest:
+      type: object
+      required: [patient_number, target_department_id]
+      properties:
+        patient_number:
+          type: string
+          pattern: "^[0-9]{5}$"
+        target_department_id:
+          type: string
+          pattern: "^dep_[A-Za-z0-9]{12}$"
+      additionalProperties: false
+    CreatePatientMovementRequest:
+      type: object
+      required: [patient_number, target_bed_id]
+      properties:
+        patient_number:
+          type: string
+          pattern: "^[0-9]{5}$"
+        target_bed_id:
+          type: string
+          pattern: "^bed_[A-Za-z0-9]{12}$"
+      additionalProperties: false
+    CompletePatientMovementRequest:
+      type: object
+      required: [patient_number]
+      properties:
+        patient_number:
+          type: string
+          pattern: "^[0-9]{5}$"
+      additionalProperties: false
+    PatientMovementAvailableBed:
+      type: object
+      required: [id, bed_type, material]
+      properties:
+        id:
+          type: string
+          pattern: "^bed_[A-Za-z0-9]{12}$"
+        bed_type:
+          $ref: "#/components/schemas/BedType"
+        material:
+          $ref: "#/components/schemas/BedMaterial"
+    PatientMovementAvailableRoom:
+      type: object
+      required:
+        - id
+        - name
+        - department
+        - station
+        - room_type
+        - bed_capacity
+        - current_capacity
+        - available_beds
+      properties:
+        id:
+          type: string
+          pattern: "^roo_[A-Za-z0-9]{12}$"
+        name:
+          type: string
+        department:
+          type: string
+        station:
+          type: string
+        room_type:
+          $ref: "#/components/schemas/RoomType"
+        bed_capacity:
+          type: integer
+        current_capacity:
+          type: integer
+        available_beds:
+          type: array
+          items:
+            $ref: "#/components/schemas/PatientMovementAvailableBed"
+    PatientMovementAvailableBeds:
+      type: object
+      required: [available_bed, available_rooms]
+      properties:
+        available_bed:
+          type: boolean
+        available_rooms:
+          type: array
+          items:
+            $ref: "#/components/schemas/PatientMovementAvailableRoom"
+    PatientMovementAvailableBedsResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/PatientMovementAvailableBeds"
+    PatientMovement:
+      type: object
+      required:
+        - patient_number
+        - from_bed_id
+        - target_bed_id
+        - target_bed_status
+        - patient_visit
+      properties:
+        patient_number:
+          type: string
+          pattern: "^[0-9]{5}$"
+        from_bed_id:
+          type:
+            - string
+            - "null"
+          pattern: "^bed_[A-Za-z0-9]{12}$"
+        target_bed_id:
+          type: string
+          pattern: "^bed_[A-Za-z0-9]{12}$"
+        target_bed_status:
+          $ref: "#/components/schemas/BedStatus"
+        patient_visit:
+          $ref: "#/components/schemas/PatientVisit"
+    PatientMovementResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/PatientMovement"
+    PatientMovementCompletion:
+      type: object
+      required: [patient_number, bed_id, bed_status, patient_visit]
+      properties:
+        patient_number:
+          type: string
+          pattern: "^[0-9]{5}$"
+        bed_id:
+          type: string
+          pattern: "^bed_[A-Za-z0-9]{12}$"
+        bed_status:
+          $ref: "#/components/schemas/BedStatus"
+        patient_visit:
+          $ref: "#/components/schemas/PatientVisit"
+    PatientMovementCompletionResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/PatientMovementCompletion"
+    CreateEmployeeRequest:
+      type: object
+      required: [first_name, last_name, position, department_id]
+      properties:
+        first_name:
+          type: string
+          minLength: 1
+        last_name:
+          type: string
+          minLength: 1
+        position:
+          type: string
+          minLength: 1
+        department_id:
+          type: string
+          pattern: "^dep_[A-Za-z0-9]{12}$"
+      additionalProperties: false
+    Employee:
+      type: object
+      required:
+        - id
+        - first_name
+        - last_name
+        - position
+        - department
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          pattern: "^emp_[A-Za-z0-9]{12}$"
+        first_name:
+          type: string
+        last_name:
+          type: string
+        position:
+          type: string
+        department:
+          type: string
+          description: Name of the department the employee belongs to.
+        created_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+        updated_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+    EmployeeResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Employee"
+    EmployeeListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Employee"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    CreateAppointmentTypeRequest:
+      type: object
+      required: [name, department_id, default_duration_minutes]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        department_id:
+          type: string
+          pattern: "^dep_[A-Za-z0-9]{12}$"
+        default_duration_minutes:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+    AppointmentType:
+      type: object
+      required:
+        - id
+        - name
+        - department
+        - default_duration_minutes
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          pattern: "^aty_[A-Za-z0-9]{12}$"
+        name:
+          type: string
+        department:
+          type: string
+          description: Name of the department for this appointment type.
+        default_duration_minutes:
+          type: integer
+        created_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+        updated_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+    AppointmentTypeResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/AppointmentType"
+    AppointmentTypeListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AppointmentType"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    AppointmentSlot:
+      type: object
+      required: [scheduled_date, scheduled_time]
+      properties:
+        scheduled_date:
+          $ref: "#/components/schemas/BerlinLocalDate"
+        scheduled_time:
+          $ref: "#/components/schemas/BerlinLocalTime"
+    AppointmentSlotListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          maxItems: 500
+          items:
+            $ref: "#/components/schemas/AppointmentSlot"
+    CreateAppointmentBookingRequest:
+      type: object
+      required:
+        - health_insurance_number
+        - birth_date
+        - appointment_type_id
+        - scheduled_date
+        - scheduled_time
+      properties:
+        health_insurance_number:
+          type: string
+          minLength: 1
+        birth_date:
+          type: string
+          format: date
+        appointment_type_id:
+          type: string
+          pattern: "^aty_[A-Za-z0-9]{12}$"
+        scheduled_date:
+          $ref: "#/components/schemas/BerlinLocalDate"
+        scheduled_time:
+          $ref: "#/components/schemas/BerlinLocalTime"
+      additionalProperties: false
+    CreateAppointmentCancellationRequest:
+      type: object
+      required:
+        - health_insurance_number
+        - birth_date
+        - appointment_type_id
+        - scheduled_date
+        - scheduled_time
+      properties:
+        health_insurance_number:
+          type: string
+          minLength: 1
+        birth_date:
+          type: string
+          format: date
+        appointment_type_id:
+          type: string
+          pattern: "^aty_[A-Za-z0-9]{12}$"
+        scheduled_date:
+          $ref: "#/components/schemas/BerlinLocalDate"
+        scheduled_time:
+          $ref: "#/components/schemas/BerlinLocalTime"
+      additionalProperties: false
+    CreateAppointmentRescheduleRequest:
+      type: object
+      required:
+        - health_insurance_number
+        - birth_date
+        - appointment_type_id
+        - from_scheduled_date
+        - from_scheduled_time
+        - to_scheduled_date
+        - to_scheduled_time
+      properties:
+        health_insurance_number:
+          type: string
+          minLength: 1
+        birth_date:
+          type: string
+          format: date
+        appointment_type_id:
+          type: string
+          pattern: "^aty_[A-Za-z0-9]{12}$"
+        from_scheduled_date:
+          $ref: "#/components/schemas/BerlinLocalDate"
+        from_scheduled_time:
+          $ref: "#/components/schemas/BerlinLocalTime"
+        to_scheduled_date:
+          $ref: "#/components/schemas/BerlinLocalDate"
+        to_scheduled_time:
+          $ref: "#/components/schemas/BerlinLocalTime"
+      additionalProperties: false
+    PatientAppointmentSearchRequest:
+      type: object
+      required: [health_insurance_number, birth_date]
+      properties:
+        health_insurance_number:
+          type: string
+          minLength: 1
+        birth_date:
+          type: string
+          format: date
+      additionalProperties: false
+    PatientAppointmentSummary:
+      type: object
+      required:
+        - employee
+        - department
+        - appointment_type
+        - scheduled_date
+        - scheduled_time
+      properties:
+        employee:
+          type:
+            - string
+            - "null"
+          description: Full name of the first employee assigned to the appointment department, if one exists.
+        department:
+          type: string
+        appointment_type:
+          type: string
+        scheduled_date:
+          $ref: "#/components/schemas/BerlinLocalDate"
+        scheduled_time:
+          $ref: "#/components/schemas/BerlinLocalTime"
+    PatientAppointmentSearchResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PatientAppointmentSummary"
+    CreateAppointmentRequest:
+      type: object
+      required:
+        - scheduled_date
+        - scheduled_time
+        - linked_patient_id
+        - appointment_type_id
+      properties:
+        scheduled_date:
+          $ref: "#/components/schemas/BerlinLocalDate"
+        scheduled_time:
+          $ref: "#/components/schemas/BerlinLocalTime"
+        linked_patient_id:
+          type: string
+          pattern: "^pat_[A-Za-z0-9]{12}$"
+        appointment_type_id:
+          type: string
+          pattern: "^aty_[A-Za-z0-9]{12}$"
+      additionalProperties: false
+    PatientReference:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          pattern: "^pat_[A-Za-z0-9]{12}$"
+    Appointment:
+      type: object
+      required:
+        - id
+        - scheduled_date
+        - scheduled_time
+        - patient
+        - appointment_type
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          pattern: "^app_[A-Za-z0-9]{12}$"
+        scheduled_date:
+          $ref: "#/components/schemas/BerlinLocalDate"
+        scheduled_time:
+          $ref: "#/components/schemas/BerlinLocalTime"
+        patient:
+          $ref: "#/components/schemas/PatientReference"
+        appointment_type:
+          $ref: "#/components/schemas/AppointmentType"
+        created_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+        updated_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+    AppointmentResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Appointment"
+    AppointmentListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Appointment"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    CreatePatientRequest:
+      type: object
+      required:
+        - gender
+        - first_name
+        - last_name
+        - birth_date
+        - birthplace
+        - social_security_number_id
+        - telephone_number
+        - accepted_gdpr
+      properties:
+        gender:
+          $ref: "#/components/schemas/Gender"
+        first_name:
+          type: string
+          minLength: 1
+        last_name:
+          type: string
+          minLength: 1
+        birth_date:
+          type: string
+          format: date
+        birthplace:
+          type: string
+          minLength: 1
+        social_security_number_id:
+          type: string
+          pattern: "^ssn_[A-Za-z0-9]{12}$"
+        telephone_number:
+          type: string
+          minLength: 1
+        accepted_gdpr:
+          type: boolean
+      additionalProperties: false
+    Patient:
+      type: object
+      required:
+        - id
+        - gender
+        - first_name
+        - last_name
+        - birth_date
+        - birthplace
+        - social_security_number
+        - telephone_number
+        - accepted_gdpr
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          pattern: "^pat_[A-Za-z0-9]{12}$"
+        gender:
+          $ref: "#/components/schemas/Gender"
+        first_name:
+          type: string
+        last_name:
+          type: string
+        birth_date:
+          type: string
+          format: date
+        birthplace:
+          type: string
+        social_security_number:
+          $ref: "#/components/schemas/SocialSecurityNumber"
+        telephone_number:
+          type: string
+        accepted_gdpr:
+          type: boolean
+        created_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+        updated_at:
+          $ref: "#/components/schemas/BerlinDateTime"
+    PatientResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/Patient"
+    PatientListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Patient"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    Pagination:
+      type: object
+      required: [self, has_more]
+      properties:
+        self:
+          type: string
+        next:
+          type: string
+        prev:
+          type: string
+        has_more:
+          type: boolean
+    Problem:
+      type: object
+      required: [type, title, status, detail, instance]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string

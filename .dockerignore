@@ -1,0 +1,15 @@
+.git
+.gitignore
+.worktrees
+Dockerfile
+README.md
+docs
+healthcare.sqlite
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+test
+# node_modules / build output at any depth (incl. frontend/) — rebuilt in-image
+**/node_modules
+**/dist
+**/coverage
